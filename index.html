@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wake Up</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000000;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            position: relative;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .background-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+            pointer-events: none;
+        }
+
+        .background-video.show { opacity: 1; }
+
+        body.pulsing::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+            animation: screenPulse 1.5s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        @keyframes screenPulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        .center-btn {
+            font-size: 50px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            color: rgb(255, 255, 255);
+            background-color: transparent;
+            border: none;
+            padding: 20px 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            outline: none;
+            position: relative;
+            z-index: 10;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+        }
+
+        .center-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .text-mode {
+            border: none;
+            background-color: transparent;
+            box-shadow: none;
+            cursor: default;
+            padding: 0;
+            text-shadow: 
+                0 0 10px #ffffff, 0 0 20px #ffffff, 0 0 30px #ffffff,
+                0 0 40px #ffffff, 0 0 70px #ffffff, 0 0 80px #ffffff;
+            animation: glowPulse 1.5s ease-in-out infinite alternate;
+            font-weight: bold;
+            letter-spacing: 3px;
+        }
+
+        @keyframes glowPulse {
+            from { text-shadow: 0 0 10px #ffffff, 0 0 20px #ffffff, 0 0 40px #ffffff, 0 0 70px #ffffff; }
+            to { text-shadow: 0 0 15px #ffffff, 0 0 30px #ffffff, 0 0 50px #ffffff, 0 0 90px #ffffff; }
+        }
+
+        /* === ИСПРАВЛЕНИЕ: Аватарка всегда поверх всего === */
+        .avatar-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            z-index: 100; /* Было 20, стало 100 — теперь выше соцсетей! */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto !important; /* Принудительно включаем клики */
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+        }
+
+        .avatar-wrapper.show {
+            animation: avatarAppear 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes avatarAppear {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            60% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .avatar {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.7), 0 0 50px rgba(255, 255, 255, 0.4), 0 0 80px rgba(255, 255, 255, 0.2);
+            animation: avatarPulse 2s ease-in-out infinite;
+            transition: opacity 0.1s ease, filter 0.1s ease; 
+            user-select: none;
+            -webkit-user-drag: none;
+            pointer-events: none;
+            display: block;
+            will-change: opacity, transform;
+        }
+
+        @keyframes avatarPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 25px rgba(255, 255, 255, 0.7), 0 0 50px rgba(255, 255, 255, 0.4), 0 0 80px rgba(255, 255, 255, 0.2); }
+            50% { transform: scale(1.08); box-shadow: 0 0 35px rgba(255, 255, 255, 0.9), 0 0 70px rgba(255, 255, 255, 0.6), 0 0 100px rgba(255, 255, 255, 0.3); }
+        }
+
+        .text-fade-out {
+            animation: textFadeOut 0.8s ease-out forwards;
+        }
+
+        @keyframes textFadeOut {
+            to { opacity: 0; transform: scale(0.95); filter: blur(3px); }
+        }
+
+        /* === ИСПРАВЛЕНИЕ: Соцсети ниже аватарки === */
+        .social-icons-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 50; /* Было 30, но аватарка теперь 100 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            width: 460px;
+            height: 460px;
+        }
+
+        .social-icons-container.show { 
+            opacity: 1; 
+            z-index: 50; 
+            pointer-events: auto; 
+        }
+
+        .social-icon {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            font-size: 35px;
+            text-decoration: none;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            pointer-events: auto;
+            opacity: 0;
+            transform: scale(0.5);
+            z-index: 1; /* Иконки ниже аватарки */
+        }
+
+        .social-icon:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.9);
+            background-color: rgba(255, 255, 255, 0.35);
+        }
+
+        .social-icon:nth-child(1) { --angle: 0deg; }
+        .social-icon:nth-child(2) { --angle: 60deg; }
+        .social-icon:nth-child(3) { --angle: 120deg; }
+        .social-icon:nth-child(4) { --angle: 180deg; }
+        .social-icon:nth-child(5) { --angle: 240deg; }
+        .social-icon:nth-child(6) { --angle: 300deg; }
+
+        .social-icon {
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) rotate(var(--angle)) translateX(180px) rotate(calc(-1 * var(--angle))) scale(0.5);
+        }
+
+        .social-icons-container.show .social-icon {
+            animation: appearIcon 0.6s ease forwards;
+        }
+
+        .social-icons-container.show .social-icon:nth-child(1) { animation-delay: 0.1s; }
+        .social-icons-container.show .social-icon:nth-child(2) { animation-delay: 0.2s; }
+        .social-icon:nth-child(3) { animation-delay: 0.3s; }
+        .social-icon:nth-child(4) { animation-delay: 0.4s; }
+        .social-icon:nth-child(5) { animation-delay: 0.5s; }
+        .social-icon:nth-child(6) { animation-delay: 0.6s; }
+
+        @keyframes appearIcon {
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) rotate(var(--angle)) translateX(180px) rotate(calc(-1 * var(--angle))) scale(1);
+            }
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        .avatar-wrapper.clicked {
+            transform: translate(-50%, -50%) scale(0.92) !important;
+        }
+    </style>
+</head>
+<body>
+
+    <video id="backgroundVideo" class="background-video" muted loop playsinline>
+        <source src="" type="video/mp4">
+        Ваш браузер не поддерживает видео.
+    </video>
+
+    <button id="actionElement" class="center-btn">PRESS</button>
+    
+    <!-- Аватарка: z-index 100, всегда сверху -->
+    <div id="avatarWrapper" class="avatar-wrapper">
+        <img src="ava1.jpg" 
+             alt="Avatar" 
+             class="avatar" 
+             id="avatarImage"
+             draggable="false">
+    </div>
+
+    <div id="socialIconsContainer" class="social-icons-container">
+        <a href="https://t.me/aeoxve" target="_blank" class="social-icon" title="Telegram">
+            <i class="fab fa-telegram-plane"></i>
+            <span class="sr-only">Telegram</span>
+        </a>
+        <a href="https://t.me/whynuk" target="_blank" class="social-icon" title="Channel">
+            <i class="fab fa-telegram"></i>
+            <span class="sr-only">Channel</span>
+        </a>
+        <a href="https://steamcommunity.com/id/whynuk/" target="_blank" class="social-icon" title="Steam">
+            <i class="fab fa-steam"></i>
+            <span class="sr-only">Steam</span>
+        </a>
+        <a href="https://soundcloud.com/whynuk" target="_blank" class="social-icon" title="SoundCloud">
+            <i class="fab fa-soundcloud"></i>
+            <span class="sr-only">SoundCloud</span>
+        </a>
+        <a href="https://www.tiktok.com/@whynuk1" target="_blank" class="social-icon" title="TikTok">
+            <i class="fab fa-tiktok"></i>
+            <span class="sr-only">TikTok</span>
+        </a>
+        <a href="https://discord.gg/bKdUDRHs2Q" target="_blank" class="social-icon" title="Discord">
+            <i class="fab fa-discord"></i>
+            <span class="sr-only">Discord</span>
+        </a>
+    </div>
+
+    <audio id="typingSound" src="" preload="auto"></audio>
+
+    <script>
+        const backgroundPairs = [
+            { video: '1.mp4', audio: 'music.mp3' },
+            { video: '2.mp4', audio: 'music.mp3' },
+            { video: '3.mp4', audio: 'music.mp3' },
+        ];
+
+        const avatarFiles = [
+            'ava1.jpg', 'ava2.jpg', 'ava3.jpg', 'ava4.jpg', 'ava5.jpg'
+        ];
+        
+        let currentAvatarIndex = 0;
+        let clickCount = 0;
+
+        function getRandomBackground() {
+            return backgroundPairs[Math.floor(Math.random() * backgroundPairs.length)];
+        }
+
+        function initRandomBackground() {
+            const selected = getRandomBackground();
+            const videoEl = document.getElementById('backgroundVideo');
+            const audioEl = document.getElementById('typingSound');
+            
+            if(videoEl?.querySelector('source')) {
+                videoEl.querySelector('source').src = selected.video;
+            }
+            if(audioEl) audioEl.src = selected.audio;
+            if(videoEl) videoEl.load();
+            if(audioEl) audioEl.load();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initRandomBackground();
+            setupAvatarClick();
+            console.log("✅ Аватарка готова к бесконечным кликам! Z-index: 100");
+        });
+
+        const element = document.getElementById('actionElement');
+        const avatarWrapper = document.getElementById('avatarWrapper');
+        const avatarImage = document.getElementById('avatarImage');
+        const socialIconsContainer = document.getElementById('socialIconsContainer');
+        const typingSound = document.getElementById('typingSound');
+        const backgroundVideo = document.getElementById('backgroundVideo');
+        
+        let isClicked = false;
+        let isFinalSequenceStarted = false;
+
+        function changeAvatar() {
+            clickCount++;
+            console.log(`🖱️ Клик #${clickCount} | Индекс: ${currentAvatarIndex} → ${(currentAvatarIndex + 1) % avatarFiles.length}`);
+
+            currentAvatarIndex = (currentAvatarIndex + 1) % avatarFiles.length;
+            const newSrc = avatarFiles[currentAvatarIndex];
+            
+            // Эффект моргания
+            avatarImage.style.opacity = '0.2';
+            avatarImage.style.filter = 'blur(2px)';
+            
+            setTimeout(() => {
+                avatarImage.src = newSrc;
+                avatarImage.onload = () => {
+                    avatarImage.style.opacity = '1';
+                    avatarImage.style.filter = 'blur(0px)';
+                };
+                setTimeout(() => {
+                    avatarImage.style.opacity = '1';
+                    avatarImage.style.filter = 'blur(0px)';
+                }, 100);
+            }, 50);
+        }
+
+        function setupAvatarClick() {
+            if(!avatarWrapper) return;
+
+            const handlePress = (e) => {
+                if(e.cancelable) e.preventDefault();
+                avatarWrapper.classList.add('clicked');
+                changeAvatar();
+                setTimeout(() => avatarWrapper.classList.remove('clicked'), 100);
+            };
+
+            // pointerdown работает и на мышке, и на таче, без задержек
+            avatarWrapper.addEventListener('pointerdown', handlePress, { passive: false });
+            avatarWrapper.addEventListener('contextmenu', (e) => e.preventDefault());
+            
+            // 🛡️ Защита: если вдруг pointer-events отключатся — принудительно включаем
+            const observer = new MutationObserver(() => {
+                if(getComputedStyle(avatarWrapper).pointerEvents === 'none') {
+                    avatarWrapper.style.pointerEvents = 'auto';
+                    console.warn('⚠️ pointer-events был сброшен, исправлено.');
+                }
+            });
+            observer.observe(avatarWrapper, { attributes: true, attributeFilter: ['style', 'class'] });
+        }
+
+        function triggerFinalSequence() {
+            if (isFinalSequenceStarted) return;
+            isFinalSequenceStarted = true;
+
+            if(backgroundVideo) {
+                backgroundVideo.classList.add('show');
+                backgroundVideo.muted = false; 
+                backgroundVideo.play().catch(e => console.warn("Video play error:", e));
+            }
+            
+            document.body.classList.add('pulsing');
+            if(avatarWrapper) avatarWrapper.classList.add('show');
+            if(element) element.classList.add('text-fade-out');
+            
+            setTimeout(() => {
+                if(element) element.classList.remove('text-mode');
+                setTimeout(() => {
+                    if(socialIconsContainer) socialIconsContainer.classList.add('show');
+                }, 400);
+            }, 1300);
+        }
+
+        if(typingSound) {
+            typingSound.addEventListener('ended', triggerFinalSequence);
+            typingSound.addEventListener('error', () => setTimeout(triggerFinalSequence, 3000));
+        } else {
+            setTimeout(triggerFinalSequence, 100); 
+        }
+
+        if(element) {
+            element.addEventListener('click', function() {
+                if (isClicked) return;
+                isClicked = true;
+
+                if(typingSound) {
+                    typingSound.currentTime = 0;
+                    typingSound.play().catch((e) => {
+                        console.warn('Autoplay prevented:', e);
+                        setTimeout(triggerFinalSequence, 3000);
+                    });
+                } else {
+                    triggerFinalSequence();
+                }
+
+                const originalText = "PRESS";
+                const newText = "wake up f1lthy"; 
+                let i = originalText.length;
+                
+                const deleteInterval = setInterval(() => {
+                    i--;
+                    element.textContent = originalText.substring(0, i);
+                    if (i <= 0) {
+                        clearInterval(deleteInterval);
+                        typeNewText(newText);
+                    }
+                }, 100);
+            });
+        }
+
+        function typeNewText(text) {
+            if(!element) return;
+            element.classList.add('text-mode');
+            let i = 0;
+            element.textContent = "";
+            const typeInterval = setInterval(() => {
+                if (i < text.length) {
+                    element.textContent += text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(typeInterval);
+                }
+            }, 100);
+        }
+    </script>
+
+</body>
+</html>
